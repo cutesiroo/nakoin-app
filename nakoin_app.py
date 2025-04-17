@@ -1,6 +1,4 @@
-# 🃏 나코인 v14 통합판 - 도윤의 카드 배틀 앱 최종버전
-# 기능: 로그인, 카드 뽑기 (애니메이션 + 사운드), 카드 일러스트, 덱 구성, 배틀 시각화 포함
-
+# 🃏 나코인 v14 통합판 (수정됨) - 로그인, 카드 뽑기, 일러스트, 덱 구성, 배틀 포함
 import streamlit as st
 import random
 import json
@@ -8,13 +6,10 @@ import os
 import time
 from datetime import datetime
 
-# 설정
 st.set_page_config(page_title="나코인 v14", layout="wide")
 USER_FOLDER = "users"
 os.makedirs(USER_FOLDER, exist_ok=True)
-TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# 등급별 일러스트
 CARD_IMAGES = {
     "일반": "https://picsum.photos/seed/common/400/225",
     "고급": "https://picsum.photos/seed/rare/400/225",
@@ -33,11 +28,11 @@ GRADE_POOL = {
     "비밀": 1
 }
 GRADE_LIST = list(GRADE_POOL.keys())
-grade_counts = {g: 0 for g in GRADE_POOL}
 
 # 로그인 처리
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+
 if not st.session_state.logged_in:
     st.title("🎮 나코인 로그인")
     username = st.text_input("닉네임")
@@ -51,7 +46,13 @@ if not st.session_state.logged_in:
                 st.error("비밀번호가 틀렸습니다.")
                 st.stop()
         else:
-            user_data = {"password": password, "cards": {}, "deck": [], "history": []}
+            user_data = {
+                "password": password,
+                "cards": {},
+                "deck": [],
+                "history": [],
+                "grade_counts": {g: 0 for g in GRADE_POOL}
+            }
             with open(user_file, 'w') as f:
                 json.dump(user_data, f)
         st.session_state.logged_in = True
@@ -59,29 +60,27 @@ if not st.session_state.logged_in:
         st.rerun()
     st.stop()
 
-# 유저 파일 로드
+# 로그인 된 유저 파일 불러오기
 username = st.session_state.username
 USER_FILE = os.path.join(USER_FOLDER, f"{username}.json")
 with open(USER_FILE, 'r') as f:
     user_data = json.load(f)
 
-# 로그아웃 버튼
+# 로그아웃 처리
 if st.button("🔓 로그아웃"):
     st.session_state.clear()
     st.rerun()
 
-# 메뉴
 menu = st.sidebar.radio("🌟 메뉴 선택", ["카드 뽑기", "내 카드", "덱 구성", "배틀"])
 
-# 1. 카드 뽑기
-if "cards" not in user_data:
-    user_data["cards"] = {}
+# 카드 뽑기
 if menu == "카드 뽑기":
     st.title("🎁 카드 뽑기")
     if st.button("🧪 한 장 뽑기!"):
         with st.spinner("카드를 소환 중..."):
             time.sleep(1.5)
         grade = random.choices(list(GRADE_POOL.keys()), weights=GRADE_POOL.values())[0]
+        grade_counts = user_data.get("grade_counts", {g: 0 for g in GRADE_POOL})
         grade_counts[grade] += 1
         name = f"{grade} {grade_counts[grade]}"
         img_url = CARD_IMAGES.get(grade)
@@ -90,12 +89,13 @@ if menu == "카드 뽑기":
             "image": img_url,
             "ability": "능력 미지정"
         }
+        user_data["grade_counts"] = grade_counts
         with open(USER_FILE, 'w') as f:
             json.dump(user_data, f)
         st.success(f"{grade} 카드 '{name}' 을 획득했습니다!")
         st.image(img_url, caption=f"{name} - {grade}", use_column_width=True)
 
-# 2. 카드 목록
+# 카드 목록
 elif menu == "내 카드":
     st.title("📦 보유 카드 목록")
     cards = user_data.get("cards", {})
@@ -109,7 +109,7 @@ elif menu == "내 카드":
             st.markdown(f"능력: `{info['ability']}`")
             st.markdown("---")
 
-# 3. 덱 구성
+# 덱 구성
 elif menu == "덱 구성":
     st.title("🧩 덱 구성하기 (최대 5장)")
     all_cards = list(user_data["cards"].keys())
@@ -122,14 +122,15 @@ elif menu == "덱 구성":
     for name in selected:
         st.markdown(f"- {name} ({user_data['cards'][name]['grade']})")
 
-# 4. 배틀
+# 배틀
 elif menu == "배틀":
     st.title("⚔️ 카드 배틀 시뮬레이션")
     deck = user_data.get("deck", [])[:5]
     if not deck:
         st.warning("덱이 비어 있습니다.")
         st.stop()
-    enemy_deck = random.sample(list(user_data["cards"].keys()), len(deck)) if len(user_data["cards"]) >= 2 else deck
+    enemy_candidates = [c for c in user_data["cards"] if c not in deck]
+    enemy_deck = random.sample(enemy_candidates, len(deck)) if len(enemy_candidates) >= len(deck) else deck
     st.markdown("👑 **내 덱**")
     for name in deck:
         st.markdown(f"- {name} ({user_data['cards'][name]['grade']})")

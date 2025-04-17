@@ -74,6 +74,8 @@ if st.button("🔓 로그아웃"):
 menu = st.sidebar.radio("🌟 메뉴 선택", ["카드 뽑기", "내 카드", "덱 구성", "배틀"])
 
 # 1. 카드 뽑기
+if "cards" not in user_data:
+    user_data["cards"] = {}
 if menu == "카드 뽑기":
     st.title("🎁 카드 뽑기")
     if st.button("🧪 한 장 뽑기!"):

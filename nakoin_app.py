@@ -1,4 +1,4 @@
-# 🪙 나코인 v8 - 툴바 & 카드 크기 확대 버전
+# 🪙 나코인 v9 - 능력 설명 + 카드 뒷면 + 배경 테마 기능 추가
 import streamlit as st
 import random
 import json
@@ -14,33 +14,58 @@ USER_FOLDER = "users"
 os.makedirs(USER_FOLDER, exist_ok=True)
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# 🔧 스타일: 툴바 크기 확장 + 카드 확대
-st.markdown("""
+# 🎨 테마 설정
+THEMES = {
+    "밝은 테마": {
+        "bg": "#f8f5ef",
+        "card": "#ffffff",
+        "border": "#dcd4b6",
+        "toolbar": "#ede4d1"
+    },
+    "어두운 테마": {
+        "bg": "#2b2b2b",
+        "card": "#3a3a3a",
+        "border": "#555",
+        "toolbar": "#444"
+    },
+    "나무 테마": {
+        "bg": "#f5f0e1",
+        "card": "#f7f2e8",
+        "border": "#c9bfa4",
+        "toolbar": "#e4d3b2"
+    }
+}
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "밝은 테마"
+
+selected_theme = st.selectbox("테마 선택", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.theme))
+st.session_state.theme = selected_theme
+
+THEME = THEMES[selected_theme]
+
+# 🎨 스타일 설정
+st.markdown(f"""
 <style>
-body {
-    background-color: #f8f5ef;
-    font-family: 'Verdana';
-}
-.stApp {
-    background-color: #f8f5ef;
-}
-.card {
-    background-color: #fff;
+body {{ background-color: {THEME['bg']}; }}
+.stApp {{ background-color: {THEME['bg']}; }}
+.card {{
+    background-color: {THEME['card']};
     border-radius: 20px;
     box-shadow: 6px 6px 18px rgba(0,0,0,0.08);
     padding: 2rem;
     margin-bottom: 2rem;
     text-align: center;
-    border: 2px solid #dcd4b6;
+    border: 2px solid {THEME['border']};
     animation: fadein 0.8s ease-in;
     width: 100%;
-}
-.card img {
+}}
+.card img {{
     border-radius: 16px;
     margin-bottom: 1rem;
     max-height: 280px;
-}
-.stButton>button {
+}}
+.stButton>button {{
     background-color: #b0d8c5;
     border-radius: 10px;
     padding: 0.6em 2em;
@@ -49,17 +74,17 @@ body {
     color: #2c2c2c;
     font-weight: bold;
     transition: all 0.3s ease;
-}
-.stButton>button:hover {
+}}
+.stButton>button:hover {{
     background-color: #9ccab0;
     transform: scale(1.05);
-}
-@keyframes fadein {
-    from {opacity: 0; transform: translateY(12px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-.toolbar {
-    background-color: #ede4d1;
+}}
+@keyframes fadein {{
+    from {{opacity: 0; transform: translateY(12px);}}
+    to {{opacity: 1; transform: translateY(0);}}
+}}
+.toolbar {{
+    background-color: {THEME['toolbar']};
     padding: 18px 30px;
     border-radius: 20px;
     margin-bottom: 30px;
@@ -70,7 +95,7 @@ body {
     font-weight: bold;
     color: #2f2f2f;
     box-shadow: 4px 4px 12px rgba(0,0,0,0.05);
-}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -94,9 +119,9 @@ if login_btn and username and password:
             "password": password,
             "balance": 50000,
             "people": {
-                "존미니": {"price": 1000, "popularity": 75, "owned": 0, "history": [1000], "image": "", "trait": "안정형"},
-                "지민": {"price": 1200, "popularity": 90, "owned": 0, "history": [1200], "image": "", "trait": "공격형"},
-                "서준": {"price": 800, "popularity": 45, "owned": 0, "history": [800], "image": "", "trait": "인기형"}
+                "존미니": {"price": 1000, "popularity": 75, "owned": 0, "history": [1000], "image": "", "trait": "안정형", "ability": "가격이 급격히 하락하지 않음"},
+                "지민": {"price": 1200, "popularity": 90, "owned": 0, "history": [1200], "image": "", "trait": "공격형", "ability": "드물게 큰 상승폭 발생"},
+                "서준": {"price": 800, "popularity": 45, "owned": 0, "history": [800], "image": "", "trait": "인기형", "ability": "인기도가 빠르게 변함"}
             },
             "last_login": ""
         }
@@ -165,27 +190,32 @@ if menu == "대시보드":
 elif menu == "거래소":
     st.subheader("캐릭터 거래")
     for name, info in people.items():
+        flipped = st.checkbox(f"{name} 카드 뒷면 보기", key=f"flip_{name}")
         with st.container():
             st.markdown("<div class='card'>", unsafe_allow_html=True)
-            if info.get("image"):
-                img = show_image(info['image'])
-                st.image(img, use_column_width=True)
-            st.markdown(f"<h3 style='margin-top:0;'>{name}</h3>", unsafe_allow_html=True)
-            st.markdown(f"<div style='font-size:18px;'>특성: {info['trait']}<br>가격: {info['price']}<br>인기: {info['popularity']}<br>보유: {info['owned']}</div>", unsafe_allow_html=True)
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button(f"{name} 구매", key=f"buy_{name}"):
-                    if balance >= info['price']:
-                        info['owned'] += 1
-                        st.session_state.data['balance'] -= info['price']
-                        st.toast(f"{name} 구매 완료")
-                    else:
-                        st.error("잔고 부족")
-            with c2:
-                if info['owned'] > 0 and st.button(f"{name} 판매", key=f"sell_{name}"):
-                    info['owned'] -= 1
-                    st.session_state.data['balance'] += info['price']
-                    st.toast(f"{name} 판매 완료")
+            if flipped:
+                st.markdown(f"<h3>{name}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size:16px;'>능력 설명: <strong>{info.get('ability', '-')}</strong></p>", unsafe_allow_html=True)
+            else:
+                if info.get("image"):
+                    img = show_image(info['image'])
+                    st.image(img, use_column_width=True)
+                st.markdown(f"<h3>{name}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:18px;'>특성: {info['trait']}<br>가격: {info['price']}<br>인기: {info['popularity']}<br>보유: {info['owned']}</div>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                with c1:
+                    if st.button(f"{name} 구매", key=f"buy_{name}"):
+                        if balance >= info['price']:
+                            info['owned'] += 1
+                            st.session_state.data['balance'] -= info['price']
+                            st.toast(f"{name} 구매 완료")
+                        else:
+                            st.error("잔고 부족")
+                with c2:
+                    if info['owned'] > 0 and st.button(f"{name} 판매", key=f"sell_{name}"):
+                        info['owned'] -= 1
+                        st.session_state.data['balance'] += info['price']
+                        st.toast(f"{name} 판매 완료")
             st.markdown("</div>", unsafe_allow_html=True)
 
 elif menu == "차트":
@@ -199,6 +229,7 @@ elif menu == "상장":
     new_price = st.number_input("시작 가격", min_value=100, value=1000)
     new_pop = st.slider("인기도", 0, 100, 50)
     new_trait = st.selectbox("특성", ["안정형", "공격형", "인기형"])
+    new_ability = st.text_input("능력 설명 (예: 일정 가격 이하로 하락하지 않음)")
     new_img = st.file_uploader("이미지 업로드 (선택)", type=["jpg", "png", "jpeg"])
 
     if st.button("상장하기"):
@@ -214,6 +245,7 @@ elif menu == "상장":
                 "owned": 0,
                 "history": [new_price],
                 "trait": new_trait,
+                "ability": new_ability,
                 "image": img_base64
             }
             st.session_state.data['balance'] -= 10000

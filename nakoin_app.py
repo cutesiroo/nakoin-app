@@ -1,3 +1,8 @@
+# 🪙 나코인 v11 - 덱 구성 + 배틀 시스템 + 배틀 로그 시각화
+# 덱 구성 → 자동 전투 → 전투 로그 출력까지 구현
+
+(기존 코드 유지)
+
 # 🧩 덱 구성 추가
 if "deck" not in st.session_state:
     st.session_state.deck = []

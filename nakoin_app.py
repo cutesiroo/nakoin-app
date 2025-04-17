@@ -191,7 +191,7 @@ elif menu == "뽑기":
         "전설": ["루카"],
         "비밀": ["X"]
     }
-    if st.button("한 장 뽑기!"):
+if st.button("한 장 뽑기!"):
     with st.spinner("✨ 카드를 소환 중..."):
         time.sleep(1.5)
         grades, probs = zip(*card_pool)

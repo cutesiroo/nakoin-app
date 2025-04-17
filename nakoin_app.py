@@ -191,13 +191,13 @@ elif menu == "뽑기":
         "전설": ["루카"],
         "비밀": ["X"]
     }
-if st.button("한 장 뽑기!"):
-    with st.spinner("✨ 카드를 소환 중..."):
+    if st.button("한 장 뽑기!"):
+        with st.spinner("✨ 카드를 소환 중..."):
         time.sleep(1.5)
         grades, probs = zip(*card_pool)
         grade = random.choices(grades, weights=probs)[0]
         # 이름 자동 생성
-        count = sum(1 for k in people if people[k]['grade'] == grade and k.startswith(grade)) + 1
+        count = sum(1 for k, v in people.items() if v.get('grade') == grade and k.startswith(grade)) + 1
         name = f"{grade} {count}"
         st.success(f"🎉 {name} [{grade}] 카드를 뽑았습니다!")
         if name not in people:

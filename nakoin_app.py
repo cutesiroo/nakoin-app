@@ -214,3 +214,68 @@ if menu == "뽑기":
 # 저장
 with open(os.path.join(USER_FOLDER, f"{username}.json"), 'w') as f:
     json.dump(st.session_state.data, f)
+    # 테마 색상 (모던 3D 느낌)
+THEMES = {
+    "모던 3D": {
+        "bg": "#1e1e2f",
+        "card": "#292940",
+        "border": "#3d3d5c",
+        "toolbar": "#2d2d44",
+        "text": "#f2f2f2",
+        "accent": "#7f5af0"
+    }
+}
+
+THEME = THEMES["모던 3D"]
+
+# 스타일 시트 적용
+st.markdown(f"""
+<style>
+body {{ background-color: {THEME['bg']}; color: {THEME['text']}; }}
+.stApp {{ background-color: {THEME['bg']}; color: {THEME['text']}; }}
+.card {{
+    background: linear-gradient(145deg, {THEME['card']}, #1c1c30);
+    border-radius: 20px;
+    box-shadow: 8px 8px 16px #141427, -8px -8px 16px #22224b;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: {THEME['text']};
+    text-align: center;
+    border: 1px solid {THEME['border']};
+    transform: perspective(1000px);
+}}
+.card img {{
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}}
+.toolbar {{
+    background-color: {THEME['toolbar']};
+    padding: 18px 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: {THEME['text']};
+    box-shadow: inset 2px 2px 6px #111122, inset -2px -2px 6px #2f2f4f;
+}}
+.stButton>button {{
+    background-color: {THEME['accent']};
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    padding: 0.6em 2em;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+}}
+.stButton>button:hover {{
+    background-color: #684de0;
+    transform: scale(1.05);
+}}
+</style>

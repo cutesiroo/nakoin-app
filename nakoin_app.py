@@ -5,6 +5,7 @@ import json
 import os
 import pandas as pd
 import base64
+import time
 from datetime import datetime
 
 st.set_page_config(page_title="카드배틀 아레나", layout="wide")

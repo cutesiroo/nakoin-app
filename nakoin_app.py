@@ -279,3 +279,4 @@ body {{ background-color: {THEME['bg']}; color: {THEME['text']}; }}
     transform: scale(1.05);
 }}
 </style>
+""", unsafe_allow_html=True)

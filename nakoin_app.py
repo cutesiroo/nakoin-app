@@ -56,7 +56,7 @@ if not st.session_state.logged_in:
                 json.dump(user_data, f)
         st.session_state.logged_in = True
         st.session_state.username = username
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # 유저 파일 로드
@@ -68,7 +68,7 @@ with open(USER_FILE, 'r') as f:
 # 로그아웃 버튼
 if st.button("🔓 로그아웃"):
     st.session_state.clear()
-    st.experimental_rerun()
+    st.rerun()
 
 # 메뉴
 menu = st.sidebar.radio("🌟 메뉴 선택", ["카드 뽑기", "내 카드", "덱 구성", "배틀"])

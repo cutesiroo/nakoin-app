@@ -1,22 +1,26 @@
+# 🪙 나코인 v5 - 카드 이미지 + 능력 강화 + UI 리뉴얼
 import streamlit as st
 import random
 import json
 import os
 import pandas as pd
 import time
+import base64
+from datetime import datetime
 
-# 로그인 및 사용자별 저장
-st.set_page_config(page_title="나코인 거래소", layout="wide")
+st.set_page_config(page_title="나코인 거래소 v5", layout="wide")
 
+USER_FOLDER = "users"
+os.makedirs(USER_FOLDER, exist_ok=True)
+TODAY = datetime.now().strftime("%Y-%m-%d")
+
+# 🔐 로그인
 st.title("🔐 나코인 거래소 - 로그인")
-
 username = st.text_input("닉네임을 입력하세요")
 password = st.text_input("비밀번호를 입력하세요", type="password")
 login_btn = st.button("로그인")
 
 if login_btn and username and password:
-    USER_FOLDER = "users"
-    os.makedirs(USER_FOLDER, exist_ok=True)
     USER_FILE = os.path.join(USER_FOLDER, f"{username}.json")
 
     if os.path.exists(USER_FILE):
@@ -30,10 +34,11 @@ if login_btn and username and password:
             "password": password,
             "balance": 50000,
             "people": {
-                "존미니": {"price": 1000, "popularity": 75, "owned": 0, "history": [1000]},
-                "지민": {"price": 1200, "popularity": 90, "owned": 0, "history": [1200]},
-                "서준": {"price": 800, "popularity": 45, "owned": 0, "history": [800]}
-            }
+                "존미니": {"price": 1000, "popularity": 75, "owned": 0, "history": [1000], "image": "", "trait": "안정형"},
+                "지민": {"price": 1200, "popularity": 90, "owned": 0, "history": [1200], "image": "", "trait": "공격형"},
+                "서준": {"price": 800, "popularity": 45, "owned": 0, "history": [800], "image": "", "trait": "인기형"}
+            },
+            "last_login": ""
         }
         with open(USER_FILE, 'w') as f:
             json.dump(user_data, f)
@@ -46,144 +51,131 @@ if login_btn and username and password:
 if not st.session_state.get("logged_in"):
     st.stop()
 
-# 이후 기존 나코인 기능 실행
 balance = st.session_state.data['balance']
 people = st.session_state.data['people']
+last_login = st.session_state.data.get("last_login", "")
 
-CHARACTER_TRAITS = {
-    "존미니": "📈 안정형 (변동폭 작음)",
-    "지민": "⚡ 공격형 (가격 변동 큼)",
-    "서준": "🎯 인기형 (인기도 잘 변동됨)"
+st.markdown("""
+<style>
+.card {
+    border: 1px solid #444;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #222;
+    color: white;
 }
-
-SECRET_CHARACTER = {
-    "코드네임X": {
-        "price": 2000,
-        "popularity": 95,
-        "owned": 0,
-        "history": [2000],
-        "secret": True,
-        "unlocked": False
-    }
+.card img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
 }
+</style>
+""", unsafe_allow_html=True)
 
-if balance >= 70000 and "코드네임X" not in people:
-    people.update(SECRET_CHARACTER)
-    people["코드네임X"]["unlocked"] = True
-    st.balloons()
-    st.success("🎉 비밀 캐릭터 '코드네임X' 해금!")
+st.markdown(f"""
+<div style='background-color:#1e1e2f;padding:10px 20px;border-radius:10px;margin-bottom:15px;'>
+    <span style='color:#FFD700;font-size:20px;'>🧑‍💼 {username}</span>
+    <span style='float:right;color:#00FFAA;font-size:20px;'>💰 잔고: {balance} 원</span>
+</div>
+""", unsafe_allow_html=True)
 
-for name, person in people.items():
-    if name == "지민":
-        delta_price = random.randint(-300, 300)
-    elif name == "존미니":
-        delta_price = random.randint(-80, 80)
+if last_login != TODAY:
+    bonus = random.randint(3000, 10000)
+    balance += bonus
+    st.session_state.data['balance'] = balance
+    st.session_state.data['last_login'] = TODAY
+    st.toast(f"🎁 출석 보상! +{bonus}원", icon="🎉")
+
+# 무작위 이벤트
+if random.randint(1, 10) == 1:
+    st.info("🌟 전체 가격이 20% 급등했습니다!")
+    for p in people.values():
+        p['price'] = int(p['price'] * 1.2)
+
+# 능력치 효과 반영
+for name, p in people.items():
+    trait = p.get("trait", "")
+    if trait == "공격형":
+        dp = random.randint(-300, 300)
+    elif trait == "안정형":
+        dp = random.randint(-80, 80)
     else:
-        delta_price = random.randint(-150, 150)
+        dp = random.randint(-150, 150)
+    p['price'] = max(100, p['price'] + dp)
+    p['popularity'] = min(100, max(0, p['popularity'] + random.randint(-3, 3)))
+    p['history'].append(p['price'])
 
-    if name == "서준":
-        delta_pop = random.randint(-5, 5)
-    else:
-        delta_pop = random.randint(-3, 3)
+menu = st.sidebar.radio("🕹️ 메뉴", ["🏠 대시보드", "🛒 거래", "📈 차트", "📤 상장"])
 
-    person['price'] = max(100, person['price'] + delta_price)
-    person['popularity'] = min(100, max(0, person['popularity'] + delta_pop))
-    person['history'].append(person['price'])
-
-menu = st.sidebar.radio("🎮 메뉴 선택", ["🏠 대시보드", "🛒 거래하기", "📈 차트 보기", "🧍 신규 상장"])
-
-st.title(f"🪙 {username}님의 나코인 거래소")
-
-def get_grade(pop):
-    if pop >= 90:
-        return "⭐️⭐️⭐️ 레전드"
-    elif pop >= 70:
-        return "⭐️⭐️ 하트"
-    elif pop >= 40:
-        return "⭐️ 보통"
-    else:
-        return "💩 비호감"
-
-def get_ai_recommendations(people):
-    ranked = sorted(people.items(), key=lambda x: x[1]['popularity'] / max(x[1]['price'], 1), reverse=True)
-    return ranked[:3]
-
-def get_ranking():
-    ranks = []
-    for file in os.listdir("users"):
-        if file.endswith(".json"):
-            with open(os.path.join("users", file), 'r') as f:
-                data = json.load(f)
-                total = data['balance'] + sum(p['owned'] * p['price'] for p in data['people'].values())
-                ranks.append((file.replace(".json", ""), total))
-    return sorted(ranks, key=lambda x: x[1], reverse=True)
+def show_image(image_data):
+    if image_data:
+        img_b64 = base64.b64decode(image_data.encode())
+        st.image(img_b64, use_column_width=True)
 
 if menu == "🏠 대시보드":
-    st.subheader("🤖 AI 추천 TOP3")
-    for name, info in get_ai_recommendations(people):
-        trait = CHARACTER_TRAITS.get(name, "")
-        st.markdown(f"💡 **{name}** {trait} — 💵 {info['price']} | 🔥 {info['popularity']} | 🏷 {get_grade(info['popularity'])}")
-        time.sleep(0.1)
-    st.markdown(f"### 💰 현재 잔고: `{balance}` 원")
+    st.subheader("📊 보유 캐릭터 요약")
+    for name, info in people.items():
+        if info['owned'] > 0:
+            st.markdown(f"- **{name}** ({info['trait']}) — `{info['owned']}개` | 💵 {info['price']} | 🔥 {info['popularity']}")
 
-    st.subheader("🏆 전체 유저 랭킹")
-    for i, (user, score) in enumerate(get_ranking(), 1):
-        st.markdown(f"{i}위. **{user}** — 총 자산: {score}원")
+elif menu == "🛒 거래":
+    st.subheader("💱 캐릭터 거래")
+    for name, info in people.items():
+        with st.container():
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            if info.get("image"):
+                img_b64 = base64.b64decode(info['image'])
+                st.image(img_b64, use_column_width=True)
+            st.markdown(f"**{name}** | 💵 {info['price']} | 🔥 {info['popularity']} | 📦 {info['owned']}개 | 🧬 {info['trait']}")
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button(f"🛒 구매 {name}", key=f"buy_{name}"):
+                    if balance >= info['price']:
+                        info['owned'] += 1
+                        st.session_state.data['balance'] -= info['price']
+                        st.toast(f"{name} 구매 완료!", icon="✅")
+                    else:
+                        st.error("잔고 부족!")
+            with c2:
+                if info['owned'] > 0 and st.button(f"💵 판매 {name}", key=f"sell_{name}"):
+                    info['owned'] -= 1
+                    st.session_state.data['balance'] += info['price']
+                    st.toast(f"{name} 판매 완료!", icon="💸")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-elif menu == "🛒 거래하기":
-    st.subheader("🎯 인물 코인 거래")
-    selected = st.selectbox("👤 인물 선택", list(people.keys()))
-    p = people[selected]
-    st.markdown(f"**💲 {selected}** — 가격: `{p['price']}` | 인기: `{p['popularity']}` | 등급: `{get_grade(p['popularity'])}` | 보유: `{p['owned']}`개")
+elif menu == "📈 차트":
+    st.subheader("📊 가격 변화 차트")
+    df = pd.DataFrame({k: pd.Series(v['history'][-20:]) for k,v in people.items()})
+    st.line_chart(df)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        qty = st.number_input("구매 수량", min_value=1, value=1, key="buy")
-        if st.button("🛒 구매"):
-            cost = qty * p['price']
-            if balance >= cost:
-                p['owned'] += qty
-                st.session_state.data['balance'] -= cost
-                st.success(f"🎉 {selected} 코인 {qty}개 구매 완료!")
-            else:
-                st.error("❌ 잔고 부족")
-
-    with col2:
-        qty2 = st.number_input("판매 수량", min_value=1, value=1, key="sell")
-        if st.button("💵 판매"):
-            if p['owned'] >= qty2:
-                p['owned'] -= qty2
-                st.session_state.data['balance'] += qty2 * p['price']
-                st.success(f"💸 {selected} 코인 {qty2}개 판매 완료!")
-            else:
-                st.error("❌ 보유 수량 부족")
-
-elif menu == "📈 차트 보기":
-    st.subheader("📊 가격 추이 차트")
-    chart_data = {name: pd.Series(info['history'][-20:]) for name, info in people.items()}
-    st.line_chart(pd.DataFrame(chart_data))
-
-elif menu == "🧍 신규 상장":
-    st.subheader("🧬 새로운 코인 상장하기")
-    new_name = st.text_input("🔤 이름")
-    new_price = st.number_input("💸 시작 가격", min_value=100, value=1000)
-    new_pop = st.slider("🔥 인기도", 0, 100, 50)
+elif menu == "📤 상장":
+    st.subheader("🆕 새로운 캐릭터 상장")
+    new_name = st.text_input("이름")
+    new_price = st.number_input("가격", min_value=100, value=1000)
+    new_pop = st.slider("인기도", 0, 100, 50)
+    new_trait = st.selectbox("특성", ["안정형", "공격형", "인기형"])
+    new_img = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpeg"])
 
     if st.button("🚀 상장하기"):
         if new_name in people:
-            st.error("⚠️ 이미 존재하는 인물입니다.")
-        elif st.session_state.data['balance'] < 10000:
-            st.error("❌ 수수료 부족 (1만 원 필요)")
+            st.error("이미 존재하는 이름입니다!")
+        elif balance < 10000:
+            st.error("상장 수수료 부족! (1만 원 필요)")
         else:
+            img_base64 = base64.b64encode(new_img.read()).decode() if new_img else ""
             people[new_name] = {
                 "price": new_price,
                 "popularity": new_pop,
                 "owned": 0,
-                "history": [new_price]
+                "history": [new_price],
+                "trait": new_trait,
+                "image": img_base64
             }
             st.session_state.data['balance'] -= 10000
-            st.success(f"🎉 {new_name} 상장 완료!")
+            st.success(f"{new_name} 상장 완료!")
 
-# 자동 저장 (개별 유저 저장)
-with open(os.path.join("users", f"{username}.json"), 'w') as f:
+# 저장
+with open(os.path.join(USER_FOLDER, f"{username}.json"), 'w') as f:
     json.dump(st.session_state.data, f)

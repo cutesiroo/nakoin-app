@@ -1,4 +1,4 @@
-# 🪙 나코인 v11 - 덱 구성 + 배틀 시스템 + 배틀 로그 시각화
+# 🃏 나코인 v12 - 코인 제거 + 카드배틀 게임 전환
 import streamlit as st
 import random
 import json
@@ -7,13 +7,13 @@ import pandas as pd
 import base64
 from datetime import datetime
 
-st.set_page_config(page_title="나코인 거래소", layout="wide")
+st.set_page_config(page_title="카드배틀 아레나", layout="wide")
 
 USER_FOLDER = "users"
 os.makedirs(USER_FOLDER, exist_ok=True)
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# 🎨 테마
+# 테마 설정 (유지)
 THEMES = {
     "밝은 테마": {"bg": "#f8f5ef", "card": "#ffffff", "border": "#dcd4b6", "toolbar": "#ede4d1"},
     "어두운 테마": {"bg": "#2b2b2b", "card": "#3a3a3a", "border": "#555", "toolbar": "#444"},
@@ -25,11 +25,10 @@ selected_theme = st.selectbox("테마 선택", list(THEMES.keys()), index=list(T
 st.session_state.theme = selected_theme
 THEME = THEMES[selected_theme]
 
-# 🎨 스타일
+# 스타일
 st.markdown(f"""
 <style>
 body {{ background-color: {THEME['bg']}; }}
-.stApp {{ background-color: {THEME['bg']}; }}
 .card {{
     background-color: {THEME['card']};
     border-radius: 20px;
@@ -48,24 +47,6 @@ body {{ background-color: {THEME['bg']}; }}
     aspect-ratio: 16 / 9;
     object-fit: cover;
 }}
-.stButton>button {{
-    background-color: #b0d8c5;
-    border-radius: 10px;
-    padding: 0.6em 2em;
-    font-size: 1.1em;
-    border: none;
-    color: #2c2c2c;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}}
-.stButton>button:hover {{
-    background-color: #9ccab0;
-    transform: scale(1.05);
-}}
-@keyframes fadein {{
-    from {{opacity: 0; transform: translateY(12px);}}
-    to {{opacity: 1; transform: translateY(0);}}
-}}
 .toolbar {{
     background-color: {THEME['toolbar']};
     padding: 18px 30px;
@@ -83,7 +64,7 @@ body {{ background-color: {THEME['bg']}; }}
 """, unsafe_allow_html=True)
 
 # 로그인
-st.title("나코인 거래소")
+st.title("카드배틀 아레나")
 username = st.text_input("닉네임")
 password = st.text_input("비밀번호", type="password")
 login_btn = st.button("로그인")
@@ -99,17 +80,15 @@ if login_btn and username and password:
     else:
         user_data = {
             "password": password,
-            "balance": 50000,
             "people": {
-                "존미니": {"price": 1000, "popularity": 75, "owned": 0, "history": [1000], "image": "", "trait": "안정형", "ability": "가격이 급격히 하락하지 않음", "grade": "일반"},
-                "지민": {"price": 1200, "popularity": 90, "owned": 0, "history": [1200], "image": "", "trait": "공격형", "ability": "드물게 큰 상승폭 발생", "grade": "고급"},
-                "서준": {"price": 800, "popularity": 45, "owned": 0, "history": [800], "image": "", "trait": "인기형", "ability": "인기도가 빠르게 변함", "grade": "일반"},
-                "하나": {"price": 1500, "popularity": 95, "owned": 0, "history": [1500], "image": "", "trait": "지능형", "ability": "전투 시 자동 대응", "grade": "희귀"},
-                "강태": {"price": 1800, "popularity": 80, "owned": 0, "history": [1800], "image": "", "trait": "탱커형", "ability": "타격 반감 능력 보유", "grade": "영웅"},
-                "리아": {"price": 2200, "popularity": 99, "owned": 0, "history": [2200], "image": "", "trait": "전설형", "ability": "첫 턴에 선공 보장", "grade": "전설"},
-                "???": {"price": 5000, "popularity": 0, "owned": 0, "history": [5000], "image": "", "trait": "암호화", "ability": "조건 해금 필요", "grade": "비밀"}
-            },
-            "last_login": ""
+                "존미니": {"owned": 1, "image": "", "trait": "안정형", "ability": "가격이 급격히 하락하지 않음", "grade": "일반"},
+                "지민": {"owned": 1, "image": "", "trait": "공격형", "ability": "드물게 큰 상승폭 발생", "grade": "고급"},
+                "서준": {"owned": 1, "image": "", "trait": "인기형", "ability": "인기도가 빠르게 변함", "grade": "일반"},
+                "하나": {"owned": 1, "image": "", "trait": "지능형", "ability": "전투 시 자동 대응", "grade": "희귀"},
+                "강태": {"owned": 1, "image": "", "trait": "탱커형", "ability": "타격 반감 능력 보유", "grade": "영웅"},
+                "리아": {"owned": 1, "image": "", "trait": "전설형", "ability": "첫 턴에 선공 보장", "grade": "전설"},
+                "???": {"owned": 0, "image": "", "trait": "암호화", "ability": "조건 해금 필요", "grade": "비밀"}
+            }
         }
         with open(USER_FILE, 'w') as f:
             json.dump(user_data, f)
@@ -121,53 +100,37 @@ if login_btn and username and password:
 if not st.session_state.get("logged_in"):
     st.stop()
 
-# 데이터
-balance = st.session_state.data['balance']
 people = st.session_state.data['people']
-last_login = st.session_state.data.get("last_login", "")
 
-# HUD
+# HUD 표시
 st.markdown(f"""
 <div class='toolbar'>
-    <div>👤 사용자: {username}</div>
-    <div>💰 잔고: {balance:,} 원</div>
+    <div>🎴 사용자: {username}</div>
+    <div>🧩 보유 카드 수: {sum(p['owned'] for p in people.values())}장</div>
 </div>
 """, unsafe_allow_html=True)
 
-# 출석 보상
-if last_login != TODAY:
-    bonus = random.randint(3000, 10000)
-    balance += bonus
-    st.session_state.data['balance'] = balance
-    st.session_state.data['last_login'] = TODAY
-    st.toast(f"출석 보상 지급: +{bonus}원")
-
-# 가격 변동
-for name, p in people.items():
-    level = p.get("grade", "일반")
-    delta = random.randint(-50, 50)
-    if level == "고급": delta *= 1.2
-    elif level == "희귀": delta *= 1.5
-    elif level == "전설": delta *= 2
-    p["price"] = max(100, int(p["price"] + delta))
-    p["popularity"] = max(0, min(100, p["popularity"] + random.randint(-2, 2)))
-    p["history"].append(p["price"])
-
-# 덱 구성
+# 덱 초기화
 if "deck" not in st.session_state:
     st.session_state.deck = []
 
-menu = st.sidebar.radio("메뉴", ["대시보드", "거래소", "차트", "상장", "덱 구성", "배틀"])
+menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀"])
 
 def show_image(base64_data):
     if base64_data:
         return base64.b64decode(base64_data.encode())
     return None
 
-if menu == "덱 구성":
+if menu == "보유 카드":
+    st.subheader("보유 중인 카드")
+    for name, info in people.items():
+        if info['owned'] > 0:
+            st.markdown(f"**{name}** [{info['grade']}] - {info['ability']}")
+
+elif menu == "덱 구성":
     st.subheader("내 카드 덱 구성하기 (최대 5장)")
-    options = [name for name, p in people.items() if p["owned"] > 0]
-    selected = st.multiselect("보유 중인 카드 선택", options, default=st.session_state.deck, max_selections=5)
+    available_cards = [name for name, data in people.items() if data['owned'] > 0]
+    selected = st.multiselect("카드를 선택하세요", available_cards, default=st.session_state.deck, max_selections=5)
     if selected:
         st.session_state.deck = selected
         st.success("덱이 저장되었습니다!")

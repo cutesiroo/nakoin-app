@@ -107,7 +107,8 @@ people = st.session_state.data['people']
 if "deck" not in st.session_state:
     st.session_state.deck = []
 
-menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀", "뽑기"])
+menu = st.sidebar.radio("🌟 메뉴를 선택하세요", ["보유 카드", "덱 구성", "배틀", "뽑기"])
+st.markdown(f"### 현재 선택: **{menu}**")
 
 # HUD
 st.markdown(f"""
@@ -191,9 +192,14 @@ elif menu == "뽑기":
         "전설": ["루카"],
         "비밀": ["X"]
     }
-if st.button("한 장 뽑기!"):
-    with st.spinner("✨ 카드를 소환 중..."):
-        time.sleep(1.5)
+    if menu == "뽑기":
+    st.subheader("🎁 카드 뽑기")
+    card_pool = [
+        ("일반", 50), ("고급", 25), ("희귀", 15), ("영웅", 7), ("전설", 2), ("비밀", 1)
+    ]
+    if st.button("✨ 한 장 뽑기!", key="draw"):
+        with st.spinner("✨ 카드를 소환 중..."):
+            time.sleep(1.5)
         grades, probs = zip(*card_pool)
         grade = random.choices(grades, weights=probs)[0]
         # 이름 자동 생성

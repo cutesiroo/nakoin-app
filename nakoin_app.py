@@ -1,4 +1,4 @@
-# 🃏 나코인 v12 - 코인 제거 + 카드배틀 게임 전환
+# 🃏 나코인 v12 - 코인 제거 + 카드배틀 게임 전환 (들여쓰기 오류 수정)
 import streamlit as st
 import random
 import json
@@ -13,16 +13,17 @@ USER_FOLDER = "users"
 os.makedirs(USER_FOLDER, exist_ok=True)
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# 테마 설정 (유지)
+# 테마 설정
 THEMES = {
     "밝은 테마": {"bg": "#f8f5ef", "card": "#ffffff", "border": "#dcd4b6", "toolbar": "#ede4d1"},
     "어두운 테마": {"bg": "#2b2b2b", "card": "#3a3a3a", "border": "#555", "toolbar": "#444"},
     "나무 테마": {"bg": "#f5f0e1", "card": "#f7f2e8", "border": "#c9bfa4", "toolbar": "#e4d3b2"}
 }
+
 if "theme" not in st.session_state:
     st.session_state.theme = "밝은 테마"
-st.session_state.theme = selected_theme
-THEME = THEMES[selected_theme]
+
+THEME = THEMES[st.session_state.theme]
 
 # 스타일
 st.markdown(f"""
@@ -101,25 +102,19 @@ if not st.session_state.get("logged_in"):
 
 people = st.session_state.data['people']
 
-# HUD 표시
+# 덱 초기화
+if "deck" not in st.session_state:
+    st.session_state.deck = []
+
+menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀"])
+
+# HUD
 st.markdown(f"""
 <div class='toolbar'>
     <div>🎴 사용자: {username}</div>
     <div>🧩 보유 카드 수: {sum(p['owned'] for p in people.values())}장</div>
 </div>
 """, unsafe_allow_html=True)
-
-# 덱 초기화
-if "deck" not in st.session_state:
-    st.session_state.deck = []
-
-# 메뉴 선언 (중복 제거)
-menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀"])
-    st.session_state.deck = []
-
-# 메뉴 한 번만 설정
-    st.session_state.deck = []
-
 
 def show_image(base64_data):
     if base64_data:

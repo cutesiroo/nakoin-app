@@ -114,7 +114,10 @@ st.markdown(f"""
 if "deck" not in st.session_state:
     st.session_state.deck = []
 
+# 메뉴 한 번만 설정
 menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀"])
+    st.session_state.deck = []
+
 
 def show_image(base64_data):
     if base64_data:

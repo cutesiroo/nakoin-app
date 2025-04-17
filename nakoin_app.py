@@ -1,4 +1,4 @@
-# 🪙 나코인 v7 - 애니메이션 효과 + 이모티콘 정리 + 이미지 아이콘 적용
+# 🪙 나코인 v8 - 툴바 & 카드 크기 확대 버전
 import streamlit as st
 import random
 import json
@@ -14,7 +14,7 @@ USER_FOLDER = "users"
 os.makedirs(USER_FOLDER, exist_ok=True)
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# 🌈 스타일 + 애니메이션 + 아이콘 스타일링
+# 🔧 스타일: 툴바 크기 확장 + 카드 확대
 st.markdown("""
 <style>
 body {
@@ -26,45 +26,50 @@ body {
 }
 .card {
     background-color: #fff;
-    border-radius: 16px;
-    box-shadow: 4px 4px 12px rgba(0,0,0,0.05);
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    border-radius: 20px;
+    box-shadow: 6px 6px 18px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin-bottom: 2rem;
     text-align: center;
-    border: 1px solid #e1dfd2;
+    border: 2px solid #dcd4b6;
     animation: fadein 0.8s ease-in;
+    width: 100%;
 }
 .card img {
-    border-radius: 12px;
-    margin-bottom: 0.8rem;
-    max-height: 180px;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    max-height: 280px;
 }
 .stButton>button {
     background-color: #b0d8c5;
-    border-radius: 8px;
-    padding: 0.4em 1.2em;
+    border-radius: 10px;
+    padding: 0.6em 2em;
+    font-size: 1.1em;
     border: none;
     color: #2c2c2c;
     font-weight: bold;
     transition: all 0.3s ease;
 }
 .stButton>button:hover {
-    background-color: #99cbb0;
-    transform: scale(1.03);
+    background-color: #9ccab0;
+    transform: scale(1.05);
 }
 @keyframes fadein {
-    from {opacity: 0; transform: translateY(10px);}
+    from {opacity: 0; transform: translateY(12px);}
     to {opacity: 1; transform: translateY(0);}
 }
-.animated-bg {
-    background: linear-gradient(90deg, #f8f5ef 0%, #f2f0e5 50%, #f8f5ef 100%);
-    background-size: 200% 200%;
-    animation: moving 10s ease infinite;
-}
-@keyframes moving {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+.toolbar {
+    background-color: #ede4d1;
+    padding: 18px 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #2f2f2f;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.05);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -110,11 +115,11 @@ balance = st.session_state.data['balance']
 people = st.session_state.data['people']
 last_login = st.session_state.data.get("last_login", "")
 
-# 상단 HUD
+# HUD 툴바
 st.markdown(f"""
-<div style='background-color:#f0ede1;padding:10px 20px;border-radius:12px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center;'>
-    <div style='font-size:18px;color:#2b3a2b;'>사용자: <strong>{username}</strong></div>
-    <div style='font-size:18px;color:#2b3a2b;'>잔고: <strong>{balance:,} 원</strong></div>
+<div class='toolbar'>
+    <div>👤 사용자: {username}</div>
+    <div>💰 잔고: {balance:,} 원</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -126,9 +131,9 @@ if last_login != TODAY:
     st.session_state.data['last_login'] = TODAY
     st.toast(f"출석 보상 지급: +{bonus}원")
 
-# 능력 반영 + 무작위 이벤트
+# 가격 변동 + 이벤트
 if random.randint(1, 10) == 1:
-    st.info("모든 캐릭터의 가격이 20% 상승했습니다!")
+    st.info("모든 캐릭터 가격이 20% 상승했습니다!")
     for p in people.values():
         p['price'] = int(p['price'] * 1.2)
 
@@ -165,7 +170,8 @@ elif menu == "거래소":
             if info.get("image"):
                 img = show_image(info['image'])
                 st.image(img, use_column_width=True)
-            st.markdown(f"<strong>{name}</strong><br>특성: {info['trait']}<br>가격: {info['price']} | 인기: {info['popularity']} | 보유: {info['owned']}", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='margin-top:0;'>{name}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:18px;'>특성: {info['trait']}<br>가격: {info['price']}<br>인기: {info['popularity']}<br>보유: {info['owned']}</div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
                 if st.button(f"{name} 구매", key=f"buy_{name}"):

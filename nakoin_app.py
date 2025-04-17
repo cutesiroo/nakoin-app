@@ -192,7 +192,7 @@ elif menu == "뽑기":
         "비밀": ["X"]
     }
     if st.button("한 장 뽑기!"):
-        with st.spinner("✨ 카드를 소환 중..."):
+    with st.spinner("✨ 카드를 소환 중..."):
         time.sleep(1.5)
         grades, probs = zip(*card_pool)
         grade = random.choices(grades, weights=probs)[0]

@@ -106,7 +106,7 @@ people = st.session_state.data['people']
 if "deck" not in st.session_state:
     st.session_state.deck = []
 
-menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀"])
+menu = st.sidebar.radio("메뉴", ["보유 카드", "덱 구성", "배틀", "뽑기"])
 
 # HUD
 st.markdown(f"""
@@ -175,6 +175,34 @@ elif menu == "배틀":
                 st.info("⚖️ 무승부")
             else:
                 st.error("😭 최종 패배...")
+
+# 뽑기 기능
+elif menu == "뽑기":
+    st.subheader("🎁 카드 뽑기")
+    card_pool = [
+        ("일반", 50), ("고급", 25), ("희귀", 15), ("영웅", 7), ("전설", 2), ("비밀", 1)
+    ]
+    card_defs = {
+        "일반": ["준기", "보라"],
+        "고급": ["다온"],
+        "희귀": ["시우"],
+        "영웅": ["세아"],
+        "전설": ["루카"],
+        "비밀": ["X"]
+    }
+    if st.button("한 장 뽑기!"):
+    with st.spinner("✨ 카드를 소환 중..."):
+        time.sleep(1.5)
+        grades, probs = zip(*card_pool)
+        grade = random.choices(grades, weights=probs)[0]
+        # 이름 자동 생성
+        count = sum(1 for k in people if people[k]['grade'] == grade and k.startswith(grade)) + 1
+        name = f"{grade} {count}"
+        st.success(f"🎉 {name} [{grade}] 카드를 뽑았습니다!")
+        if name not in people:
+            people[name] = {"owned": 1, "image": "", "trait": f"{grade}형", "ability": "능력 미지정", "grade": grade}
+        else:
+            people[name]['owned'] += 1
 
 # 저장
 with open(os.path.join(USER_FOLDER, f"{username}.json"), 'w') as f:

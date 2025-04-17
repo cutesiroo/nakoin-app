@@ -21,7 +21,6 @@ THEMES = {
 }
 if "theme" not in st.session_state:
     st.session_state.theme = "밝은 테마"
-selected_theme = st.selectbox("테마 선택", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.theme))
 st.session_state.theme = selected_theme
 THEME = THEMES[selected_theme]
 
